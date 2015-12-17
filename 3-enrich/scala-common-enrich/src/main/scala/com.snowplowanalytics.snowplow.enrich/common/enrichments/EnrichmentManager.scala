@@ -462,12 +462,23 @@ object EnrichmentManager {
       case None => None.success
     }
 
-    // Assemble array of derived contexts
-    val derived_contexts = List(uaParser).collect {
+    // Assemble array of contexts prepared by built-in enrichments
+    val prepared_derived_contexts = List(uaParser).collect {
       case Success(Some(context)) => context
     } ++ List(weatherContext).collect {
      case Success(Some(context)) => context
     } ++ jsScript.getOrElse(Nil) ++ cookieExtractorContext
+
+    // Derive some contexts with custom API lookup enrichment
+    // TODO: pass contexts for JSON input
+    val apiLookupContext = registry.getApiLookupEnrichment match {
+      case Some(ale) => ale.lookup(event).map(_.some)
+      case None => None.success
+    }
+
+    val derived_contexts = List(apiLookupContext).collect {
+      case Success(Some(context)) => context
+    } ++ prepared_derived_contexts
 
     if (derived_contexts.size > 0) {
       event.derived_contexts = ME.formatDerivedContexts(derived_contexts)

@@ -56,7 +56,8 @@ import registry.{
   JavascriptScriptEnrichmentConfig,
   EventFingerprintEnrichmentConfig,
   CookieExtractorEnrichmentConfig,
-  WeatherEnrichmentConfig
+  WeatherEnrichmentConfig,
+  ApiLookupEnrichment
 }
 
 import utils.ScalazJson4sUtils
@@ -276,6 +277,15 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    */
   def getWeatherEnrichment: Option[WeatherEnrichment] =
     getEnrichment[WeatherEnrichment]("weather_enrichment_config")
+
+  /**
+    * Returns an Option boxing the ApiLookupEnrichment
+    * config value if present, or None if not
+    *
+    * @return Option boxing the ApiLookupEnrichment instance
+    */
+  def getApiLookupEnrichment: Option[ApiLookupEnrichment] =
+    getEnrichment[ApiLookupEnrichment]("api_lookup_enrichment_config")
 
   /**
    * Returns an Option boxing an Enrichment

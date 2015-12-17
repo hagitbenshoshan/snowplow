@@ -53,6 +53,8 @@ object Dependencies {
     val igluClient       = "0.3.1"
     val scalaForex       = "0.3.0"
     val scalaWeather     = "0.1.0"
+    val akka             = "2.3.14"
+    val akkaStreams      = "2.0.1"
     // Scala (test only)
     val specs2           = "1.14"
     val scalazSpecs2     = "0.1.2"
@@ -74,6 +76,7 @@ object Dependencies {
     val jsonValidator    = "com.github.fge"             %  "json-schema-validator"     % V.jsonValidator    
     val mavenArtifact    = "org.apache.maven"           %  "maven-artifact"            % V.mavenArtifact
     val uaParser         = "org.clojars.timewarrior"    %  "ua-parser"                 % V.uaParser
+
     // Scala
     val scalaForex       = "com.snowplowanalytics"      %% "scala-forex"               % V.scalaForex
     val scalaz7          = "org.scalaz"                 %% "scalaz-core"               % V.scalaz7
@@ -88,6 +91,10 @@ object Dependencies {
     val igluClient       = "com.snowplowanalytics"      %  "iglu-scala-client"         % V.igluClient
     val scalaUri         = "com.netaporter"             %% "scala-uri"                 % V.scalaUri
     val scalaWeather     = "com.snowplowanalytics"      %% "scala-weather"             % V.scalaWeather
+    val akka             = "com.typesafe.akka"          %% "akka-actor"                  % V.akka
+    val akkaStreams      = "com.typesafe.akka"          %% "akka-stream-experimental"    % V.akkaStreams
+    val akkaHttpCore     = "com.typesafe.akka"          %% "akka-http-core-experimental" % V.akkaStreams
+    val akkaHttp         = "com.typesafe.akka"          %% "akka-http-experimental"      % V.akkaStreams
     // Scala (test only)
     val specs2           = "org.specs2"                 %% "specs2"                    % V.specs2         % "test"
     val scalazSpecs2     = "org.typelevel"              %% "scalaz-specs2"             % V.scalazSpecs2   % "test"

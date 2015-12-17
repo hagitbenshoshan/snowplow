@@ -57,6 +57,9 @@ object SnowplowCommonEnrichBuild extends Build {
         Libraries.scalaUri,
         Libraries.scalaForex,
         Libraries.scalaWeather,
+        Libraries.akka,
+        Libraries.akkaHttp,
+        Libraries.akkaHttpCore,
         // Scala (test only)
         Libraries.specs2,
         Libraries.scalazSpecs2,

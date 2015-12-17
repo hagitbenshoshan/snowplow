@@ -1,0 +1,56 @@
+{
+	"schema": "iglu:com.snowplowanalytics.snowplow.enrichments/api_lookup_enrichment_config/jsonschema/1-0-0",
+
+	"data": {
+
+		"vendor": "com.snowplowanalytics.snowplow.enrichments",
+		"name": "api_lookup_enrichment_config",
+		"enabled": true,
+		"parameters": {
+			"inputs": [
+				{
+					"key": "user",
+					"pojo": {
+						"field": "user_id"
+					}
+				},
+				{
+					"key": "user",
+					"json": {
+						"field": "contexts",
+						"schemaCriterion": "com.snowplowanalytics.snowplow/client_session/jsonschema/1-",
+						"jsonPath": "$.userId"
+					}
+				},
+				{
+					"key": "client",
+					"pojo": {
+						"field": "app_id"
+					}
+				}
+			],
+			"api": {
+				"http": {
+					"method": "GET",
+					"uri": "http://api.acme.com/users/{{client}}/{{user}}?format=json",
+					"authentication": {
+						"http-basic": {
+							"username": "xxx",
+							"password": "yyy"
+						}
+					}
+				}
+			},
+			"output": {
+				"json": {
+					"jsonPath": "$.record",
+					"schema": "iglu:com.acme/user/jsonschema/1-0-0" 
+				}
+			},
+			"cache": {
+				"size": 3000,
+				"ttl": 60
+			}
+		}
+	}
+}
