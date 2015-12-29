@@ -55,6 +55,7 @@ object Dependencies {
     val scalaWeather     = "0.1.0"
     val akka             = "2.3.14"
     val akkaStreams      = "2.0.1"
+    val gatlingJsonpath  = "0.6.4"
     // Scala (test only)
     val specs2           = "1.14"
     val scalazSpecs2     = "0.1.2"
@@ -95,6 +96,7 @@ object Dependencies {
     val akkaStreams      = "com.typesafe.akka"          %% "akka-stream-experimental"    % V.akkaStreams
     val akkaHttpCore     = "com.typesafe.akka"          %% "akka-http-core-experimental" % V.akkaStreams
     val akkaHttp         = "com.typesafe.akka"          %% "akka-http-experimental"      % V.akkaStreams
+    val gatlingJsonpath  = "io.gatling"                 %% "jsonpath"                  % V.gatlingJsonpath
     // Scala (test only)
     val specs2           = "org.specs2"                 %% "specs2"                    % V.specs2         % "test"
     val scalazSpecs2     = "org.typelevel"              %% "scalaz-specs2"             % V.scalazSpecs2   % "test"

@@ -60,6 +60,7 @@ object SnowplowCommonEnrichBuild extends Build {
         Libraries.akka,
         Libraries.akkaHttp,
         Libraries.akkaHttpCore,
+        Libraries.gatlingJsonpath,
         // Scala (test only)
         Libraries.specs2,
         Libraries.scalazSpecs2,

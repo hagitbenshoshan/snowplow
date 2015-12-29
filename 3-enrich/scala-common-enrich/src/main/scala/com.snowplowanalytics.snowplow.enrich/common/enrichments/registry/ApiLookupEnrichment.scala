@@ -38,16 +38,6 @@ import utils.ScalazJson4sUtils
 import outputs.EnrichedEvent
 import apilookup._
 
-
-// TODO: replace Options with Validations [x]
-// TODO: request pool [x]
-// TODO: package [x]
-// TODO: auth [x]
-// TODO: cache [x]
-// TODO: rebase [x]
-// TODO: add it to manager [x]
-// TODO: JSON Path
-
 /**
  * Lets us create an ApiLookupEnrichmentConfig from a JValue.
  */
@@ -83,28 +73,38 @@ case class ApiLookupEnrichment(inputs: List[Input], api: Api, output: Output, ca
 
   /**
    * Primary function of the enrichment
+   * It will be Failure on failed HTTP request
+   * None is skipped lookup
    *
    * @param event currently enriching event
    * @param contexts derived contexts
-   * @return validated context object or error string in case of failure
+   * @return none if some inputs were missing, validated JSON context if lookup performed
    */
-  // TODO: derived contexts
-  def lookup(event: EnrichedEvent, contexts: List[JObject] = Nil): Validation[String, JObject] = {
-    val inputs = collectInputs(event, contexts)
-    cache.get(inputs) match {
-      case Some(value) => value.success
-      case None => api.perform(inputs, output)
+  def lookup(event: EnrichedEvent, contexts: List[JObject]): Option[Validation[String, JObject]] = {
+    val inputsMap = collectInputs(event, contexts)
+    inputsMap.map { inputs =>
+      cache.get(inputs) match {
+        case Some(value) => value.success
+        case None => api.perform(inputs, output)
+      }
     }
   }
 
   /**
    * Get template context out of all inputs
+   * If any of inputs missing it will return None
    *
    * @param event current enriching event
-   * @return template context
+   * @return some template context or none if any error (key is missing) occured
    */
-  def collectInputs(event: EnrichedEvent, contexts: List[JObject]): Map[String, String] =
-    inputs.map(_.getFromEvent(event)).toMap
+  def collectInputs(event: EnrichedEvent, contexts: List[JObject]): Option[Map[String, String]] = {
+    val eventInputs: Option[Map[String, String]] =
+      inputs.map(_.getFromEvent(event)).sequence.map(_.toMap)
+    val contextInputs: Option[Map[String, String]] =
+      inputs.map(_.getFromContexts(contexts)).sequence.map(_.toMap)
+
+    eventInputs |+| contextInputs   // TODO: this will concatendate strings on matching keys
+  }
 
 }
 

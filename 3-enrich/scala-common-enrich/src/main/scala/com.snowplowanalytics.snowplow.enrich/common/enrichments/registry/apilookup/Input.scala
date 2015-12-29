@@ -16,7 +16,13 @@ package enrichments
 package registry
 package apilookup
 
-import org.json4s.MappingException
+import scalaz._
+import Scalaz._
+
+import scala.util.control.NonFatal
+
+import org.json4s._
+import org.json4s.jackson.compactJson
 
 import outputs.EnrichedEvent
 
@@ -42,15 +48,89 @@ case class Input(key: String, pojo: Option[PojoInput], json: Option[JsonInput]) 
    * @param event currently enriching event
    * @return tuple of input key and event value
    */
-  def getFromEvent(event: EnrichedEvent): (String, String) = {
-    (pojo, json) match {
-      case (Some(p), _) => {
-        val method = event.getClass.getMethod(p.field)  // TODO: it will transform null to "null", need to skip
-        val value = method.invoke(event).asInstanceOf[String]
-        (key, value)
+  def getFromEvent(event: EnrichedEvent): Option[(String, String)] = pojo match {
+    case Some(pojoInput) => {
+      val value = try {
+        val method = event.getClass.getMethod(pojoInput.field)
+        Option(method.invoke(event).asInstanceOf[String]) // TODO: check on Integer, Float
+      } catch {
+        case NonFatal(_) => None
       }
-      case (_, Some(j)) => throw new NotImplementedError()
+      value.map(v => (key, v))
     }
+    case None => None
+  }
+
+  /**
+   * Get value out of list of JSON contexts.
+   * If more than one context match schemaCriterion, first will be picked
+   *
+   * @param contexts
+   * @return
+   */
+  // TODO: it could make sense to return Failure for incorrect JSON Path and absence of JSON Input
+  def getFromContexts(contexts: List[JObject]): Option[(String, String)] = json match {
+    case Some(jsonInput) => {
+      val matchedContext = getBySchemaCriterion(contexts, jsonInput.schemaCriterion).headOption  // short-circuit, pick first
+      matchedContext.flatMap { ctx =>
+        getByJsonPath(jsonInput.jsonPath, ctx).map(v => (key, v))
+      }
+    }
+    case None => None
+  }
+
+  /**
+   * Get data out of all JSON contexts matching `schemaCriterion`
+   *
+   * @param contexts list of self-describing JSON contexts attached to event
+   * @param schemaCriterion part of URI
+   * @return list of contexts matched `schemaCriterion`
+   */
+  def getBySchemaCriterion(contexts: List[JObject], schemaCriterion: String): List[JValue] = {
+    val matched = contexts.filter { context =>
+      context.obj.exists {
+        case ("schema", JString(schema)) => {
+          val schemaWithoutProtocol = schema.split(':').drop(1).mkString(":")   // TODO: do we need to drop 'iglu:'?
+          schemaWithoutProtocol.startsWith(schemaCriterion)
+        }
+      }
+    }
+    matched.map { _ \ "data" }
+  }
+
+  /**
+   * Get value by JSON Path and convert it to String
+   * Absence of value is failure
+   *
+   * @param jsonPath JSON Path
+   * @param context event context as JSON object
+   * @return validated value
+   */
+  def getByJsonPath(jsonPath: String, context: JValue): Option[String] = {
+    val result = JsonPathExtractor.query(jsonPath, context).toOption
+    result.map(JsonPathExtractor.wrapArray).flatMap(stringifyJson)
+  }
+
+  /**
+   * Helper function to stringify JValue to URL-friendly format
+   * JValue should be converted to string for further use in URL template with following rules:
+   * 1. JString -> as is
+   * 2. JInt/JDouble/JBool/null -> stringify
+   * 3. JArray -> concatenate with comma ([1,true,"foo"] -> "1,true,foo"). Nested will be flattened
+   * 4. JObject -> use as is???
+   *
+   * @param json arbitrary JSON value
+   * @return
+   */
+  def stringifyJson(json: JValue): Option[String] = json match {
+    case JString(s) => s.some
+    case JInt(i) => i.toString.some
+    case JDouble(d) => d.toString.some
+    case JDecimal(d) => d.toString.some
+    case JNull => "null".some
+    case JArray(array) => array.map(stringifyJson).mkString(",").some
+    case obj: JObject => compactJson(obj).some
+    case JNothing => None
   }
 }
 

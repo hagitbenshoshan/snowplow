@@ -18,6 +18,7 @@ package registry
 
 import com.snowplowanalytics.iglu.client.SchemaKey
 
+import org.json4s.JsonAST._
 import org.json4s.jackson.parseJson
 
 import org.specs2.Specification
@@ -212,6 +213,40 @@ object Configuration {
   val uriTemplate = "http://localhost:8000/{{user}}/foo/{{time}}"
   val enrichment = ApiLookupEnrichment(List(input1, input2), HttpApi("GET", uriTemplate, None), JsonOutput("*", "iglu:wow"), Cache(10, 5))
 
+  val someJson = parseJson(
+    """
+      |{ "store": {
+      |    "book": [
+      |      { "category": "reference",
+      |        "author": "Nigel Rees",
+      |        "title": "Sayings of the Century",
+      |        "price": 8.95
+      |      },
+      |      { "category": "fiction",
+      |        "author": "Evelyn Waugh",
+      |        "title": "Sword of Honour",
+      |        "price": 12.99
+      |      },
+      |      { "category": "fiction",
+      |        "author": "Herman Melville",
+      |        "title": "Moby Dick",
+      |        "isbn": "0-553-21311-3",
+      |        "price": 8.99
+      |      },
+      |      { "category": "fiction",
+      |        "author": "J. R. R. Tolkien",
+      |        "title": "The Lord of the Rings",
+      |        "isbn": "0-395-19395-8",
+      |        "price": 22.99
+      |      }
+      |    ],
+      |    "bicycle": {
+      |      "color": "red",
+      |      "price": 19.95
+      |    }
+      |  }
+      |}
+    """.stripMargin)
 }
 
 class ApiLookupEnrichmentSpec extends Specification with ValidationMatchers { def is =
@@ -222,6 +257,8 @@ class ApiLookupEnrichmentSpec extends Specification with ValidationMatchers { de
       "Create template context from POJO inputs"                        ! e4^
       "Build request string from template context"                      ! e5^
       "Make an HTTP request"                                            ! e6^
+      "Skip lookup on missing key"                                      ! e7^
+      "Test JSON Path"                                                  ! jp1^
                                                                           end
 
   def e1 = {
@@ -247,7 +284,7 @@ class ApiLookupEnrichmentSpec extends Specification with ValidationMatchers { de
     event.setUser_id("chuwy")
     event.setTrue_tstamp("20")
     val templateContext = Configuration.enrichment.collectInputs(event, Nil)
-    templateContext must beEqualTo(Map("user" -> "chuwy", "time" -> "20"))
+    templateContext must beSome((Map("user" -> "chuwy", "time" -> "20")))
   }
 
   def e5 = {
@@ -260,11 +297,20 @@ class ApiLookupEnrichmentSpec extends Specification with ValidationMatchers { de
     val event = new common.outputs.EnrichedEvent
     event.setUser_id("chuwy")
     event.setTrue_tstamp("20")
-    val a = Configuration.enrichment.lookup(event)
-    a must beSuccessful
+    val a = Configuration.enrichment.lookup(event, Nil)
+    a must beSome
   }
 
   def e7 = {
-    // Http auth
+    val event = new common.outputs.EnrichedEvent
+    event.setUser_id("chuwy")
+    // time in true_tstamp won't be found
+    val a = Configuration.enrichment.lookup(event, Nil)
+    a must beNone
+  }
+
+  // TODO: move JSON Path into its own module
+  def jp1 = {
+    JsonPathExtractor.query("$.store.book[1].price", Configuration.someJson) must beSuccessful(List(JDouble(12.99)))
   }
 }

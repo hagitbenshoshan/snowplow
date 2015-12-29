@@ -30,6 +30,7 @@ import com.twitter.util.SynchronizedLruMap
 // It could be necessary to include `Output` into cache key as well
 // In some cases user may want to get different subobjects from one URI
 // Now, with different `Outputs`, but with same `Input` he get same context
+// TODO: http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/cache/CacheBuilder.html#expireAfterWrite%28long,%20java.util.concurrent.TimeUnit%29
 case class Cache(size: Int, ttl: Int) {
 
   type TimestampedContext = (JObject, Int)

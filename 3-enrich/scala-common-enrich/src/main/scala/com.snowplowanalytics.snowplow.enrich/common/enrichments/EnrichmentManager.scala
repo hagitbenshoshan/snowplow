@@ -470,9 +470,11 @@ object EnrichmentManager {
     } ++ jsScript.getOrElse(Nil) ++ cookieExtractorContext
 
     // Derive some contexts with custom API lookup enrichment
-    // TODO: pass contexts for JSON input
     val apiLookupContext = registry.getApiLookupEnrichment match {
-      case Some(ale) => ale.lookup(event).map(_.some)
+      case Some(ale) => ale.lookup(event, prepared_derived_contexts) match {
+        case Some(lookup) => lookup.map(_.some)
+        case None => None.success                   // Some input key is missing
+      }
       case None => None.success
     }
 
